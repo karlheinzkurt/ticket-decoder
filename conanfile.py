@@ -24,6 +24,7 @@ class TicketDecoderConan(ConanFile):
                # Override some requirements for poppler, since it uses older dependencies than opencv for same libs
                # ("zlib/1.3", "override"),      # Remove this direct override when poppler gets updated
                ("libpng/1.6.42", "override"),   # Remove this direct override when freetype/2.12.1 vs. opencv/4.8.1 gets updated
+               ("expat/2.6.0", "override"),     # Remove this direct override when fontconfig/2.13.93 vs. wayland/1.22.0 gets updated
                # ("libjpeg/9e", "override"),    # Remove this direct override when poppler gets updated
                # https://conan.io/center/recipes/poppler
                ("poppler/21.07.0"),
