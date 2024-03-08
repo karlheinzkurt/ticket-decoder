@@ -182,9 +182,13 @@ build/Release/bin/ticket-decoder-test
 ```
 
 ## MacOS with Apple clang15 (amd64 & arm64)
+It might be required for dependencies to get built properly during conan install to have a 
+`python` command (without 3) in path available. So when you face an error like `python: command not found`
+it might be required to create a link via `sudo ln -s $(which python3) /usr/local/bin/python` since there
+is no package python-is-python3 in homebrew available, as it is for ubuntu.
 ```
 xcode-select --install
-
+brew install cmake
 pip3 install conan==1.62.0
 conan profile new --detect --force ticket-decoder
 conan profile update settings.compiler.version=15.0 ticket-decoder
