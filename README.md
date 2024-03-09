@@ -167,7 +167,7 @@ step "Install compiler and stdlib" in ".github/workflows/c-cpp.yml".
 ```
 apt-get install --no-install-recommends -y build-essential cmake git python-is-python3 python3-pip libgtk2.0-dev wget
 
-pip3 install conan==1.62.0
+pip3 install conan==1.63.0
 conan profile new --detect --force ticket-decoder
 conan profile update settings.compiler.libcxx=libstdc++11 ticket-decoder
 conan profile update conf.tools.system.package_manager:mode=install ticket-decoder
@@ -182,10 +182,14 @@ build/Release/bin/ticket-decoder-test
 ```
 
 ## MacOS with Apple clang15 (amd64 & arm64)
+It might be required for dependencies to get built properly during conan install to have a 
+`python` command (without 3) in path available. So when you face an error like `python: command not found`
+it might be required to create a link via `sudo ln -s $(which python3) /usr/local/bin/python` since there
+is no package python-is-python3 in homebrew available, as it is for ubuntu.
 ```
 xcode-select --install
-
-pip3 install conan==1.62.0
+brew install cmake
+pip3 install conan==1.63.0
 conan profile new --detect --force ticket-decoder
 conan profile update settings.compiler.version=15.0 ticket-decoder
 
