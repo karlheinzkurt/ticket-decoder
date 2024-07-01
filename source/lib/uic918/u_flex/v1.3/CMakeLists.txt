@@ -1,4 +1,4 @@
-PROJECT(ticket-decoder-lib-uic918-u_flex13)
+PROJECT(ticket-decoder-uic918-u_flex13)
 
 AUX_SOURCE_DIRECTORY("source" PROJECT_SOURCE)
 AUX_SOURCE_DIRECTORY("../source" PROJECT_SOURCE)
@@ -14,4 +14,4 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/gen")
 target_link_libraries(${PROJECT_NAME} PRIVATE 
    nlohmann_json::nlohmann_json
    easyloggingpp::easyloggingpp
-   ticket-decoder-lib-utility)
+   ticket-decoder-utility)

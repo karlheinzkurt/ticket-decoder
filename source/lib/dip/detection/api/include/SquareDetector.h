@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Parameters.h"
+#include "DetectorOptions.h"
 #include "Detector.h"
 
 #include "lib/utility/include/LoggingFwd.h"
@@ -15,10 +15,13 @@ namespace dip::detection::api
   class SquareDetector : public Detector
   {
     ::utility::Logger logger;
-    Parameters &parameters;
+    ::utility::DebugController &debugController;
+    DetectorOptions options;
 
   public:
-    SquareDetector(::utility::LoggerFactory &loggerFactory, Parameters &parameters);
+    SquareDetector(::utility::LoggerFactory &loggerFactory, ::utility::DebugController &debugController, DetectorOptions options);
+
+    bool isOperational() const override { return true; }
 
     Result detect(cv::Mat const &image) override;
 

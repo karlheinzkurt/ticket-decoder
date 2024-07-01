@@ -21,11 +21,12 @@
 
 #include "lib/utility/include/Utility.h"
 #include "lib/utility/include/Logging.h"
+#include "lib/utility/include/FrameRate.h"
 
-#include "lib/io/api/include/Reader.h"
-#include "lib/io/api/include/Loader.h"
 #include "lib/io/api/include/SourceManager.h"
 #include "lib/io/api/include/SinkManager.h"
+
+#include "lib/api/include/DecoderFacade.h"
 
 #include <nlohmann/json.hpp>
 
@@ -57,8 +58,8 @@ int main(int argc, char **argv)
        false, "cert/UIC_PublicKeys.xml", "File path [xml]", cmd);
    auto imageRotationArg = TCLAP::ValueArg<int>(
        "", "rotate-image",
-       "Rotate input image before processing for the given amount of degrees (default 4)",
-       false, 4, "Integer value", cmd);
+       "Rotate input image before processing for the given amount of degrees (default 0)",
+       false, 0, "Integer value", cmd);
    auto imageSplitArgContraintValues = std::vector<std::string>({"11", "21", "22", "41", "42", "43", "44"});
    auto imageSplitArgContraint = TCLAP::ValuesConstraint<std::string>(imageSplitArgContraintValues);
    auto imageSplitArg = TCLAP::ValueArg<std::string>(
@@ -78,48 +79,95 @@ int main(int argc, char **argv)
 
    auto const outputFolderPath = std::filesystem::path(outputFolderPathArg.getValue());
    auto const inputFolderPath = std::filesystem::path(inputFolderPathArg.getValue());
-   auto loggerFactory = utility::LoggerFactory::create(verboseArg.getValue());
-   auto readers = io::api::Reader::create(loggerFactory, io::api::ReadOptions{});
-   auto loader = io::api::Loader(loggerFactory, readers);
-   auto loadResult = loader.loadAsync(inputFolderPath);
-   auto sourceManager = io::api::SourceManager::create(loggerFactory, std::move(loadResult));
-   auto preProcessor = dip::utility::PreProcessor::create(loggerFactory, imageRotationArg.getValue(), imageSplitArg.getValue());
-   auto sinkManager = io::api::SinkManager::create().useSource(inputFolderPath).useDestination(outputFolderPath).build();
+   auto const executablePath = std::filesystem::canonical(std::filesystem::current_path() / argv[0]).parent_path();
+   auto const classifierFile = executablePath / "etc" / "dip" / "haarcascade_frontalface_default.xml"; // TODO: This is an example, provide classification file 4 aztec codes!
 
-   auto parameters = dip::detection::api::Parameters{std::filesystem::canonical(std::filesystem::current_path() / argv[0]).parent_path(), 7, 18};
-   auto const detectors = dip::detection::api::Detector::createAll(loggerFactory, parameters);
+   auto decoderOptions = barcode::api::DecoderOptions::DEFAULT;
+   auto preProcessorOptions = dip::filtering::PreProcessorOptions::DEFAULT;
+
+   auto loggerFactory = ::utility::LoggerFactory::create(verboseArg.getValue());
+   auto decoderFacade = api::DecoderFacade::create(loggerFactory)
+                            .withPureBarcode(decoderOptions.pure)
+                            .withLocalBinarizer(decoderOptions.binarize)
+                            .withPublicKeyFile(publicKeyFilePathArg.getValue())
+                            .withImageRotation(imageRotationArg.getValue())
+                            .withImageScale(preProcessorOptions.scalePercent)
+                            .withImageSplit(imageSplitArg.getValue())
+                            .withImageFlipping(preProcessorOptions.flippingMode)
+                            .withDetectorType(dip::detection::api::DetectorType::NOP_FORWARDER)
+                            .withAsynchronousLoad(true)
+                            .withClassifierFile(classifierFile)
+                            .build();
+
+   auto &debugController = decoderFacade.getDebugController();
+   auto sourceManager = io::api::SourceManager::create(loggerFactory, decoderFacade.load(inputFolderPath));
+   auto sinkManager = io::api::SinkManager::create()
+                          .useSource(inputFolderPath)
+                          .useDestination(outputFolderPath)
+                          .build();
+
+   // TODO Replace preProcessor, detectors, decoder, signatureChecker, interpreter by decoderFacade usage
+   auto preProcessor = dip::filtering::PreProcessor::create(loggerFactory, {imageRotationArg.getValue(),
+                                                                            preProcessorOptions.scalePercent,
+                                                                            imageSplitArg.getValue(),
+                                                                            preProcessorOptions.flippingMode});
+   auto const detectors = dip::detection::api::Detector::createAll(loggerFactory, debugController, {classifierFile});
+   auto const decoder = barcode::api::Decoder::create(loggerFactory);
    auto const signatureChecker = uic918::api::SignatureChecker::create(loggerFactory, publicKeyFilePathArg.getValue());
    auto const interpreter = uic918::api::Interpreter::create(loggerFactory, *signatureChecker);
 
-   auto dumpEnabled = true, overlayOutputImage = true, overlayOutputText = true, pureEnabled = false, binarizerEnabled = false;
-   auto detectorIndex = 2u;
+   auto dumpEnabled = true, overlayOutputImage = true, overlayOutputText = false;
+   auto detectorIndex = (unsigned int)dip::detection::api::DetectorType::NOP_FORWARDER;
 
-   auto const keyMapper = utility::KeyMapper(loggerFactory, 10, // clang-format off
-   {
-       {'i', [&](){ return "image step: "    + std::to_string(++parameters.imageProcessingDebugStep); }},
-       {'I', [&](){ return "IMAGE step: "    + std::to_string(utility::safeDecrement(parameters.imageProcessingDebugStep, 0)); }},
-       {'c', [&](){ return "contour step: "  + std::to_string(++parameters.contourDetectorDebugStep); }},
-       {'C', [&](){ return "CONTOUR step: "  + std::to_string(utility::safeDecrement(parameters.contourDetectorDebugStep, 0)); }},
-       {'f', [&](){ return "file: "          + sourceManager.next(); }},
-       {'F', [&](){ return "FILE: "          + sourceManager.previous(); }},
-       {' ', [&](){ return "camera: "        + sourceManager.toggleCamera(); }},
-       {'r', [&](){ return "rotate: "        + preProcessor.rotateCCW(); }},
-       {'R', [&](){ return "ROTATE: "        + preProcessor.rotateCW(); }},
-       {'2', [&](){ return "split 2: "       + preProcessor.toggleSplit2(); }},
-       {'4', [&](){ return "split 4: "       + preProcessor.toggleSplit4(); }},
-       {'s', [&](){ return "scale: "         + preProcessor.scaleUp(); }},
-       {'S', [&](){ return "SCALE: "         + preProcessor.scaleDown(); }},
-       {'0', [&](){ return "reset: "         + preProcessor.reset(); }},
-       {'d', [&](){ return "detector: "      + std::to_string(utility::rotate(detectorIndex, detectors.size() - 1)); }},
-       {'p', [&](){ return "pure barcode: "  + std::to_string(pureEnabled = !pureEnabled); }},
-       {'b', [&](){ return "binarizer: "     + std::to_string(binarizerEnabled = !binarizerEnabled); }},
-       {'D', [&](){ return "dump: "          + std::to_string(dumpEnabled = !dumpEnabled); }},
-       {'o', [&](){ return "overlay image: " + std::to_string(overlayOutputImage = !overlayOutputImage); }},
-       {'t', [&](){ return "overlay text: "  + std::to_string(overlayOutputText = !overlayOutputText); }}
-   }); // clang-format on
+   auto const keyMapper = utility::KeyMapper(
+       loggerFactory, 10,
+       {{'i', [&]()
+         { return "image step: " + std::to_string(debugController.incrementAs<unsigned int>("imageProcessingStep", 0u)); }},
+        {'I', [&]()
+         { return "IMAGE step: " + std::to_string(debugController.decrementAs<unsigned int>("imageProcessingStep", 0u)); }},
+        {'c', [&]()
+         { return "contour step: " + std::to_string(debugController.incrementAs<unsigned int>("contourDetectorStep", 0u)); }},
+        {'C', [&]()
+         { return "CONTOUR step: " + std::to_string(debugController.decrementAs<unsigned int>("contourDetectorStep", 0u)); }},
+        {'f', [&]()
+         { return "file: " + sourceManager.next(); }},
+        {'F', [&]()
+         { return "FILE: " + sourceManager.previous(); }},
+        {' ', [&]()
+         { return "camera: " + sourceManager.toggleCamera(); }},
+        {'r', [&]()
+         { return "rotate: " + preProcessor.rotateCCW(); }},
+        {'R', [&]()
+         { return "ROTATE: " + preProcessor.rotateCW(); }},
+        {'2', [&]()
+         { return "split 2: " + preProcessor.toggleSplit2(); }},
+        {'4', [&]()
+         { return "split 4: " + preProcessor.toggleSplit4(); }},
+        {'s', [&]()
+         { return "scale: " + preProcessor.scaleUp(); }},
+        {'S', [&]()
+         { return "SCALE: " + preProcessor.scaleDown(); }},
+        {'x', [&]()
+         { return "flip: " + preProcessor.toggleFlipping(); }},
+        {'0', [&]()
+         { return "reset: " + preProcessor.reset(); }},
+        {'d', [&]()
+         { return "detector: " + std::to_string(utility::rotate(detectorIndex, detectors.size() - 1)); }},
+        {'p', [&]()
+         { return "pure barcode: " + std::to_string(decoderOptions.pure = !decoderOptions.pure); }},
+        {'b', [&]()
+         { return "binarizer: " + std::to_string(decoderOptions.binarize = !decoderOptions.binarize); }},
+        {'D', [&]()
+         { return "dump: " + std::to_string(dumpEnabled = !dumpEnabled); }},
+        {'o', [&]()
+         { return "overlay image: " + std::to_string(overlayOutputImage = !overlayOutputImage); }},
+        {'t', [&]()
+         { return "overlay text: " + std::to_string(overlayOutputText = !overlayOutputText); }}});
 
+   auto frameRate = utility::FrameRate();
    keyMapper.handle([&](bool const keyHandled)
                     {
+      frameRate.update();
       auto source = sourceManager.getOrWait();
       // auto writer = sinkManager.get(source);
 
@@ -128,16 +176,18 @@ int main(int argc, char **argv)
 
       source = preProcessor.get(std::move(source));
 
-      auto detector = detectors[detectorIndex];
-      auto detectionResult = detector->detect(source.getImage());
+      auto &detector = *detectors.at((dip::detection::api::DetectorType)detectorIndex);
+      auto detectionResult = detector.detect(source.getImage());
       
       auto decodingResults = std::vector<barcode::api::Result>{};
       std::transform(detectionResult.contours.begin(), detectionResult.contours.end(),
                      std::back_inserter(decodingResults),
                      [&](auto const &contourDescriptor)
-                     {  
-                        auto config = cameraEnabled ? barcode::api::Config{false, true} : barcode::api::Config{pureEnabled, binarizerEnabled};
-                        return barcode::api::Decoder::decode(loggerFactory, contourDescriptor, std::move(config)); });
+                     {
+                        auto config = cameraEnabled
+                           ? barcode::api::DecoderOptions{false, decoderOptions.binarize}
+                           : decoderOptions;
+                        return decoder->decode(std::move(config), contourDescriptor); });
 
       auto interpreterResults = std::vector<std::optional<std::string>>{};
       std::transform(decodingResults.begin(), decodingResults.end(),
@@ -185,7 +235,7 @@ int main(int argc, char **argv)
       {
          std::for_each(interpreterResults.begin(), interpreterResults.end(),
                        [&](auto const &interpreterResult)
-                       {   dip::utility::drawRedText(outputImage, cv::Point(5, 280), 35, interpreterResult.value_or("{}")); });
+                       {   dip::utility::drawRedText(outputImage, cv::Point(5, 10 * 35), 35, interpreterResult.value_or("{}")); });
       }
 
       auto const anyValidated = std::any_of(interpreterResults.begin(), interpreterResults.end(), [](auto const& interpreterResult)
@@ -197,12 +247,13 @@ int main(int argc, char **argv)
       auto outputLines = std::vector<std::pair<std::string, std::string>>{};
       sourceManager.toString(std::back_inserter(outputLines));
       preProcessor.toString(std::back_inserter(outputLines));
-      outputLines.push_back(std::make_pair("detector:", detector->getName()));
-      parameters.toString(std::back_inserter(outputLines));
-      dip::utility::drawShape(outputImage,
-         cv::Rect(outputImage.cols - 60, 50, 30, 30),
-         dip::utility::Properties{anyValidated ? dip::utility::green : dip::utility::red, -1});
-      dip::utility::drawRedText(outputImage, cv::Point(5, 35), 35, 200, outputLines);
+      detector.toString(std::back_inserter(outputLines));
+      debugController.toString(std::back_inserter(outputLines));
+      frameRate.toString(std::back_inserter(outputLines));
+      auto const lineCount = dip::utility::drawRedText(outputImage, cv::Point(5, 35), 35, 200, outputLines);
+
+      dip::utility::drawShape(outputImage, cv::Rect(outputImage.cols - 60, 50, 30, 30),
+            dip::utility::Properties{anyValidated ? dip::utility::green : dip::utility::red, -1});
       dip::utility::drawBlueText(outputImage, dip::utility::getDimensionAnnotations(outputImage));
       dip::utility::showImage(outputImage); });
 
