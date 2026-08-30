@@ -52,7 +52,7 @@ jobs:
     name: Publish to pypi.org
     runs-on: ubuntu-latest
     environment:
-      name: production
+      name: pypi
       url: https://pypi.org/project/ticket-decoder
     needs: [build, sdist]
     permissions:

@@ -8,6 +8,7 @@
 #include <botan/x509_ca.h>
 #include <botan/dsa.h>
 #include <botan/pubkey.h>
+#include <botan/data_src.h>
 
 #include <regex>
 #include <map>
@@ -28,9 +29,9 @@ namespace interpreter::detail::verifier
   static auto const sha224 = "SHA-224";
   static auto const sha256 = "SHA-256";
 
-  static auto const sha1Der46 = std::make_tuple(sha1, 46, Botan::Signature_Format::DER_SEQUENCE);
-  static auto const sha224Der62 = std::make_tuple(sha224, 62, Botan::Signature_Format::DER_SEQUENCE);
-  static auto const sha256Plain64 = std::make_tuple(sha256, 64, Botan::Signature_Format::IEEE_1363);
+  static auto const sha1Der46 = std::make_tuple(sha1, 46, Botan::Signature_Format::DerSequence);
+  static auto const sha224Der62 = std::make_tuple(sha224, 62, Botan::Signature_Format::DerSequence);
+  static auto const sha256Plain64 = std::make_tuple(sha256, 64, Botan::Signature_Format::Standard);
 
   using Config = std::tuple<std::string, std::uint8_t, Botan::Signature_Format>;
 

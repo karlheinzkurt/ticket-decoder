@@ -15,7 +15,7 @@ class PopplerCppConan(ConanFile):
     """
 
     name = "poppler-cpp"
-    version = "25.10.0"
+    version = "26.08.0"
     license = "GPL-2.0-or-later", "GPL-3.0-or-later"
     homepage = "https://poppler.freedesktop.org/"
     url = "https://github.com/user4223/ticket-decoder"
@@ -49,17 +49,17 @@ class PopplerCppConan(ConanFile):
 
     def source(self):
         git = Git(self)
-        git.clone(url="https://gitlab.freedesktop.org/poppler/poppler.git", target='.', args=["--depth", "1", "--branch", "poppler-25.10.0"])
+        git.clone(url="https://gitlab.freedesktop.org/poppler/poppler.git", target='.', args=["--depth", "1", "--branch", "poppler-26.08.0"])
 
     def requirements(self):
         # https://conan.io/center/recipes/fontconfig
-        self.requires("fontconfig/2.15.0")
+        self.requires("fontconfig/2.17.1")
         # https://conan.io/center/recipes/libiconv
         self.requires("libiconv/1.18")
         # https://conan.io/center/recipes/libjpeg
         self.requires("libjpeg/9f")
         # https://conan.io/center/recipes/libpng
-        self.requires("libpng/1.6.50")
+        self.requires("libpng/1.6.58")
 
     def build_requirements(self):
         # https://conan.io/center/recipes/pkgconf
@@ -110,7 +110,7 @@ class PopplerCppConan(ConanFile):
                 ("ENABLE_LCMS", "OFF"),
                 ("ENABLE_LIBCURL", "OFF"),
                 ("ENABLE_LIBTIFF", "OFF"),
-                ("ENABLE_LIBOPENJPEG", "none"),
+                ("ENABLE_LIBOPENJPEG", "OFF"),
                 ("ENABLE_NSS3", "OFF"),
                 ("ENABLE_GPGME", "OFF"),
                 ("ENABLE_PGP_SIGNATURES", "OFF"),
@@ -130,8 +130,8 @@ class PopplerCppConan(ConanFile):
     def package_info(self):
         self.cpp_info.libs = ["poppler-cpp", "poppler"]
         self.cpp_info.includedirs.append(os.path.join("include", "poppler", "cpp"))
-        self.cpp_info.set_property("cmake_file_name", "Poppler")
-        self.cpp_info.set_property("cmake_target_name", "Poppler::Poppler")
+        self.cpp_info.set_property("cmake_file_name", "poppler")
+        self.cpp_info.set_property("cmake_target_name", "poppler::libpoppler-cpp")
         self.cpp_info.set_property("pkg_config_name", "poppler-cpp")
 
         self.cpp_info.requires.append("fontconfig::fontconfig")

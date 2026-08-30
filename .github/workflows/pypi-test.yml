@@ -1,14 +1,14 @@
 name: pypi-test
 
 on:
-  pull_request:
-    branches: [main]
+  # pull_request:
+  #  branches: [main]
   workflow_dispatch:
     inputs:
       environment:
         description: 'Publish to test.pypi.org'
         required: true
-        default: 'staging'
+        default: 'pypi-test'
 
 jobs:
   build:
@@ -58,7 +58,7 @@ jobs:
     name: Publish to test.pypi.org
     runs-on: ubuntu-latest
     environment:
-      name: staging
+      name: pypi-test
       url: https://test.pypi.org/project/ticket-decoder
     needs: [build, sdist]
     permissions:

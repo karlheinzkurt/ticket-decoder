@@ -8,7 +8,7 @@ from os import path
 
 class TicketDecoderConan(ConanFile):
    name = 'ticket-decoder'
-   version = 'v0.20'
+   version = 'v0.20.2'
    settings = "os", "compiler", "build_type", "arch"
    generators = "CMakeDeps"
    options = {
@@ -47,7 +47,7 @@ class TicketDecoderConan(ConanFile):
 
    def requirements(self):
       # https://conan.io/center/recipes/opencv
-      self.requires("opencv/4.12.0")
+      self.requires("opencv/4.14.0")
       # https://conan.io/center/recipes/nlohmann_json
       self.requires("nlohmann_json/3.12.0")
       # https://conan.io/center/recipes/easyloggingpp
@@ -55,7 +55,8 @@ class TicketDecoderConan(ConanFile):
 
       if not self.options.with_system_boost:
          # https://conan.io/center/recipes/boost
-         self.requires("boost/1.90.0")
+         self.requires("boost/1.89.0") # libpoppler build requires <= 1.89.0
+         # self.requires("boost/1.91.0")
 
       #
       # CONDITIONAL dependencies
@@ -66,13 +67,13 @@ class TicketDecoderConan(ConanFile):
 
       if self.options.with_signature_verifier:
          # https://conan.io/center/recipes/pugixml
-         self.requires("pugixml/1.15")
+         self.requires("pugixml/1.16")
          # https://conan.io/center/recipes/botan
-         self.requires("botan/3.10.0")
+         self.requires("botan/3.13.0")
 
       if self.options.with_pdf_input:
          # https://conan.io/center/recipes/poppler
-         self.requires("poppler-cpp/25.10.0")
+         self.requires("poppler/25.11.0")
 
       if self.options.with_barcode_decoder:
          # https://conan.io/center/recipes/zxing-cpp
@@ -80,18 +81,18 @@ class TicketDecoderConan(ConanFile):
 
       if self.options.with_uic_interpreter:
          # https://conan.io/center/recipes/zlib
-         self.requires("zlib/1.3.1")
+         self.requires("zlib/1.3.2")
 
       if self.options.with_sbb_interpreter:
          # https://conan.io/center/recipes/protobuf
-         self.requires("protobuf/6.32.1")
+         self.requires("protobuf/7.35.0")
 
       #
       # OVERWRITES
       #
       # https://conan.io/center/recipes/libiconv
-      self.requires("libiconv/1.18", override=True)
-      self.requires("libpng/1.6.58", override=True)
+      # self.requires("libiconv/1.18", override=True)
+      # self.requires("libpng/1.6.58", override=True)
 
    def build_requirements(self):
       # https://conan.io/center/recipes/cmake
@@ -99,7 +100,7 @@ class TicketDecoderConan(ConanFile):
       #https://conan.io/center/recipes/ninja
       self.tool_requires("ninja/[>=1.13]")
       # https://conan.io/center/recipes/gtest
-      self.test_requires("gtest/1.17.0")
+      self.test_requires("gtest/1.18.0")
 
    def generate(self):
       toolchain = CMakeToolchain(self)
