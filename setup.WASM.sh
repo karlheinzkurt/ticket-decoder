@@ -16,13 +16,16 @@ ${WORKSPACE_ROOT}/etc/conan-install.sh ${BUILD_TYPE} \
     -o:a="&:with_square_detector=False" \
     -o:a="&:with_classifier_detector=False" \
     -o:a="&:with_barcode_decoder=True" \
-    -o:a="&:with_pdf_input=True" \
+    -o:a="&:with_pdf_input=False" \
     -o:a="&:with_signature_verifier=False" \
     -o:a="&:with_uic_interpreter=True" \
     -o:a="&:with_vdv_interpreter=True" \
     -o:a="&:with_sbb_interpreter=True" \
     -pr:h="./etc/conan/profiles/emscripten" \
-    -pr:b="./etc/conan/profiles/macos15"
+#-c:b='opencv/*:tools.build:defines=["WASM=1","CV_ENABLE_INTRINSICS=OFF","__EMSCRIPTEN_MAJOR__=3","__EMSCRIPTEN_MINOR__=1","__EMSCRIPTEN_TINY__=73"]'
+#-c:b='opencv/*:tools.build:cxxflags=["-msimd128","-mrelaxed-simd"]'
+    -o:a='botan/*:amalgamation=False' \
+    -s:b='compiler=emcc'
 
 ${WORKSPACE_ROOT}/etc/cmake-config.sh ${BUILD_TYPE}
 ${WORKSPACE_ROOT}/build.sh ${BUILD_TYPE} ${@:2}
