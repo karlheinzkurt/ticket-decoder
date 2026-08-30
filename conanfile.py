@@ -85,7 +85,7 @@ class TicketDecoderConan(ConanFile):
 
       if self.options.with_sbb_interpreter:
          # https://conan.io/center/recipes/protobuf
-         self.requires("protobuf/6.33.5") # major version 7 does not compile using clang 16/17 due 2 constinit/PROTOBUF_CONSTINIT, so we use latest major 6
+         self.requires("protobuf/7.35.0")
 
       #
       # OVERWRITES
