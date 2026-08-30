@@ -5,7 +5,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 [![arm64-macos](https://github.com/user4223/ticket-decoder/actions/workflows/arm64-macos.yml/badge.svg)](https://github.com/user4223/ticket-decoder/actions/workflows/arm64-macos.yml)
 [![x64-macos](https://github.com/user4223/ticket-decoder/actions/workflows/x64-macos.yml/badge.svg)](https://github.com/user4223/ticket-decoder/actions/workflows/x64-macos.yml)
-[![ubuntu24-clang16](https://github.com/user4223/ticket-decoder/actions/workflows/ubuntu24-clang16.yml/badge.svg)](https://github.com/user4223/ticket-decoder/actions/workflows/ubuntu24-clang16.yml)
+[![ubuntu24-clang18](https://github.com/user4223/ticket-decoder/actions/workflows/ubuntu24-clang18.yml/badge.svg)](https://github.com/user4223/ticket-decoder/actions/workflows/ubuntu24-clang18.yml)
 [![ubuntu24-gcc13](https://github.com/user4223/ticket-decoder/actions/workflows/ubuntu24-gcc13.yml/badge.svg)](https://github.com/user4223/ticket-decoder/actions/workflows/ubuntu24-gcc13.yml)
 [![pypi](https://github.com/user4223/ticket-decoder/actions/workflows/pypi.yml/badge.svg)](https://github.com/user4223/ticket-decoder/actions/workflows/pypi.yml)
 
@@ -244,15 +244,15 @@ This step is required only when the UIC specificatation gets updated and the cha
 ## Considerations about optical Resolution
 
 * Printed code size: 48mm (1.89inch)
-* With 200dpi:       1.89 inch/code * 200 dot/inch ~ 380 dot/code
-* With UIC-918-3:    380  dot       / 87 blocks    ~ 4.37 dot/block
+* With 200dpi:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.89 inch/code * 200 dot/inch ~ 380 dot/code
+* With UIC-918-3:&nbsp;&nbsp;&nbsp;&nbsp;380 dot&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;87 blocks&nbsp;&nbsp;&nbsp;&nbsp;~ 4.37 dot/block
 
 
 # Build Instructions
 
 ## Requirements
 
-* **gcc >= 12 or clang >= 16 or apple-clang >= 17**  
+* **gcc >= 13 or clang >= 18 or apple-clang >= 17**  
   other compilers and versions may work but are not tested
 * **python >= 3.13**
   older versions might work but are untested
@@ -327,7 +327,7 @@ As long as the conanfile.py is unchanged, you can re-use the container with pre-
 **This will install dependencies and run the build inside a ubuntu docker build container**
 
 * [etc/docker/setup.ubuntu24.gcc13.sh](etc/docker/setup.ubuntu24.gcc13.sh)
-* [etc/docker/setup.ubuntu24.clang16.sh](etc/docker/setup.ubuntu24.clang16.sh)
+* [etc/docker/setup.ubuntu24.clang18.sh](etc/docker/setup.ubuntu24.clang18.sh)
 * [etc/docker/setup.ubuntu22.gcc11.Python.sh](etc/docker/setup.ubuntu22.gcc11.Python.sh)
 
 When the preparation of the build environment has been successful, it should be possible to build the project by using `./build.sh -j3` **inside the build container**.

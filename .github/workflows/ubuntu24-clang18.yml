@@ -1,4 +1,4 @@
-name: ubuntu24-clang16
+name: ubuntu24-clang18
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
     - cron: "23 3 2,12,22 * *"
 
 env:
-  CLANG_VERSION: 16
+  CLANG_VERSION: 18
 
 jobs:
   build:

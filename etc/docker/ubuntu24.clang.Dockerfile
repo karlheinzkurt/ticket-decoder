@@ -40,7 +40,7 @@ RUN etc/conan-config.sh clang $CLANG_VERSION
 RUN echo $TARGETARCH
 RUN etc/conan-install.sh Release \
     -pr:a="./etc/conan/profiles/ubuntu24" \
-    -pr:a="./etc/conan/profiles/clang16" \
+    -pr:a="./etc/conan/profiles/clang$CLANG_VERSION" \
     -o:a="libxml2/*:zlib=False" \
     $(if [ "$TARGETARCH" = "arm64" ]; then echo '-o:a="botan/*:with_armv8crypto=False"'; fi)
 
