@@ -1,8 +1,8 @@
 name: pypi
 
 on:
-  push:
-    tags: ['*']
+  release:
+    types: [published]
 
 jobs:
   build:

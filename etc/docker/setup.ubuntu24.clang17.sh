@@ -6,16 +6,16 @@ set -o errexit
 
 readonly WORKSPACE_ROOT="$(readlink -f $(dirname "$0"))"/../../
 
-mkdir -p ${WORKSPACE_ROOT}/build/ubuntu24.clang16.Release
+mkdir -p ${WORKSPACE_ROOT}/build/ubuntu24.clang17.Release
 
 docker buildx build ${WORKSPACE_ROOT} \
-  -t ubuntu24-clang16-ticket-decoder-builder \
+  -t ubuntu24-clang17-ticket-decoder-builder \
   -f ${WORKSPACE_ROOT}/etc/docker/ubuntu24.clang.Dockerfile \
-  --build-arg="CLANG_VERSION=16"
+  --build-arg="CLANG_VERSION=17"
 
 docker run -it \
   --mount type=bind,source=${WORKSPACE_ROOT}/source,target=/ticket-decoder/source,readonly \
   --mount type=bind,source=${WORKSPACE_ROOT}/images,target=/ticket-decoder/images,readonly \
   --mount type=bind,source=${WORKSPACE_ROOT}/CMakeLists.txt,target=/ticket-decoder/CMakeLists.txt,readonly \
-  --mount type=bind,source=${WORKSPACE_ROOT}/build/ubuntu24.clang16.Release,target=/ticket-decoder/build/Release/bin \
-  ubuntu24-clang16-ticket-decoder-builder
+  --mount type=bind,source=${WORKSPACE_ROOT}/build/ubuntu24.clang17.Release,target=/ticket-decoder/build/Release/bin \
+  ubuntu24-clang17-ticket-decoder-builder
